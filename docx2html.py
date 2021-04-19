@@ -33,10 +33,6 @@ class DocxFactory:
             return TTag(root, nsmap)
         if prefix + "drawing" == root.tag:
             return DrawingTag(root, nsmap)
-        if prefix + "pPr" == root.tag:
-            return Properties(root, nsmap)
-        if prefix + "rPr" == root.tag:
-            return Properties(root, nsmap)
         if prefix + "br" == root.tag:
             return BrTag(root, nsmap)
 
@@ -73,79 +69,58 @@ class TTag:
         self.__tag = root
         self.__text = "" if None is root.text else root.text
 
-    def html(self, styles_settings = None):
-        font_size = styles_settings.getFontSize()
-        color = styles_settings.getColor()
-        
-        style = ";".join([
-            "" if None is font_size else "font-size: {}px".format(str(font_size)),
-            "" if None is color else "color: {}".format(str(color))
-             ])
-
-        res = '<span style="{}"'.format(style) + '>{}</span>'.format(self.__text)
-
-        if styles_settings.isUnderline():
-            res = "<u>{}</u>".format(res)
-        if styles_settings.isItalic():
-            res = "<em>{}</em>".format(res)
-        if styles_settings.isBold():
-            res = "<strong>{}</strong>".format(res)
-
-        return res
+    def html(self):
+        return self.__text
 
 class Properties:
     def __init__(self, root, nsmap=[]):
-        self.__isBold = False
-        self.__isItalic = False
-        self.__isUnderline = False
-        self.__fontSize = None
+        self.__nsmap = nsmap
+        self.__styles = {}
         self.__header = None
-        self.__color = None
 
         if root is None:
             return
 
-        if None is not root.find("w:color", nsmap):
-            self.__color = root.find("w:color", nsmap).attrib.get("{" + nsmap["w"] + "}val")
+        if None is not self.getValue(root, "color"):
+            self.__styles["color"] = self.getValue(root, "color")
 
-        if None is not root.find("w:pStyle", nsmap):
-            header = root.find("w:pStyle", nsmap).attrib.get("{" + nsmap["w"] + "}val")
+        if None is not self.getValue(root, "pStyle"):
+            header = self.getValue(root, "pStyle")
 
             if "a3" == header:
                 self.__header = "h1"
 
         if None is not root.find("w:b", nsmap):
-            self.__isBold = True
+            self.__styles["font-weight"] = "bold"
 
-        if None is not root.find("w:sz", nsmap):
-            self.__fontSize = root.find("w:sz", nsmap).attrib.get("{" + nsmap["w"] + "}val")
+        if None is not self.getValue(root, "sz"):
+            self.__styles["font-size"] = self.getValue(root, "sz")
 
         if None is not root.find("w:i", nsmap):
-            self.__isItalic = True
+            self.__styles["font-style"] = "italic"
 
         if None is not root.find("w:u", nsmap):
-            self.__isUnderline = True
+            self.__styles["text-decoration"] = "underline"
     
-    def isBold(self):
-        return self.__isBold
+    def getValue(self, root, tag, attr = "val"):
+        tag = root.find("w:{}".format(tag), self.__nsmap)
 
-    def isItalic(self):
-        return self.__isItalic
+        if None is tag:
+            return None
 
-    def isUnderline(self):
-        return self.__isUnderline
+        attrname = "{" + (self.__nsmap["w"]) + "}" + "{}".format(attr)
+        return tag.attrib.get(attrname)
 
     def getHeader(self):
         return self.__header
 
-    def getFontSize(self):
-        return self.__fontSize
-    
-    def getColor(self):
-        return self.__color
+    def html(self):
+        style_html = ";".join(["{}:{}".format(key, self.__styles[key]) for key in self.__styles.keys()])
 
-    def html(self, styles_settings = None):
-        return ""
+        if len(style_html) == 0:
+            return ""
+
+        return ' style="{}"'.format(style_html)
 
 class RTag:
     def __init__(self, root, nsmap=[]):
@@ -153,8 +128,10 @@ class RTag:
 
         self.__content = DocxFactory.createAll(root, nsmap)
 
-    def html(self, styles_settings = None):
-        return "".join([str(i.html(self.__rPr)) for i in self.__content])
+    def html(self):
+        inner = "".join([str(i.html()) for i in self.__content])
+
+        return "<span{}>{}</span>".format(self.__rPr.html(), inner)
         
 class PTag:
     def __init__(self, root, nsmap = []):
@@ -162,13 +139,14 @@ class PTag:
 
         self.__r = [DocxFactory.build(tag, nsmap) for tag in root.findall("w:r", nsmap)]
 
-    def html(self, styles_settings = None):
-        inner = "".join([str(i.html(self.__pPr)) for i in self.__r])
+    def html(self):
+        inner = "".join([str(i.html()) for i in self.__r])
 
         if self.__pPr.getHeader():
             h = self.__pPr.getHeader()
-            return "<" + h + ">{}</".format(inner) + h + ">"
-        return "<p>{}</p>".format(inner)
+            return "<" + h + "{}>{}</".format(self.__pPr.html(), inner) + h + ">"
+        
+        return "<p{}>{}</p>".format(self.__pPr.html(), inner)
 
 
 for i in DocxFactory.createAll(body, nsmap):
