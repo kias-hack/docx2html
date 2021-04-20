@@ -74,7 +74,7 @@ class TTag:
         self.__text = "" if None is root.text else root.text
 
     def html(self):
-        return self.__text.replace(" ", "&nbsp;")
+        return self.__text
 
 class Properties:
     def __init__(self, root, nsmap=[]):
