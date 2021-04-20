@@ -158,5 +158,5 @@ class PTag:
 
 word = "".join([i.html() for i in DocxFactory.createAll(body, nsmap)])
 
-with open("result.html", "w") as out:
+with open("result.html", "w", encoding="utf-8") as out:
     out.write('<body style="white-space:break-spaces">{}</body>'.format(word))
