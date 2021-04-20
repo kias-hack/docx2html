@@ -74,7 +74,7 @@ class TTag:
         self.__text = "" if None is root.text else root.text
 
     def html(self):
-        return self.__text
+        return self.__text.replace("\n", "").replace("\r", "")
 
 class Properties:
     def __init__(self, root, nsmap=[]):
@@ -156,5 +156,7 @@ class PTag:
         return "<p{}>{}</p>".format(self.__pPr.html(), inner)
 
 
-for i in DocxFactory.createAll(body, nsmap):
-    print(i.html())
+word = "".join([i.html() for i in DocxFactory.createAll(body, nsmap)])
+
+with open("result.html", "w") as out:
+    out.write('<body style="white-space:break-spaces">{}</body>'.format(word))
