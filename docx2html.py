@@ -17,6 +17,14 @@ body = root.find("w:body", root.nsmap)
 
 # exit()
 
+"""
+TODO сделать отработку пробелов, нету пробелов в одном из примере. В xml не знаю где они деваются возможно какое то свойство (но везде стоит xml:space="preserve", стоит подумать)
+"""
+
+"""
+TODO возможно вынести построение тегов в статические методы, чтобы можно было делать конвертацию в две стороны
+"""
+
 class DocxFactory:
     @staticmethod
     def build(root, nsmap : list):
@@ -101,6 +109,9 @@ class Properties:
 
         if None is not root.find("w:u", nsmap):
             self.__styles["text-decoration"] = "underline"
+
+        if None is not self.getValue(root, "shd", "fill"):
+            self.__styles["background-color"] = "#{}".format(self.getValue(root, "shd", "fill"))
     
     def getValue(self, root, tag, attr = "val"):
         tag = root.find("w:{}".format(tag), self.__nsmap)
