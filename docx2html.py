@@ -44,7 +44,7 @@ class DocxFactory:
         
 
     @staticmethod
-    def createAll(root, nsmap = []):
+    def recursive(root, nsmap = []):
         for tag in root:
             yield DocxFactory.build(tag, nsmap)
 
@@ -133,7 +133,7 @@ class RTag:
     def __init__(self, root, nsmap=[]):
         self.__rPr = Properties(root.find("w:rPr", nsmap), nsmap)
 
-        self.__content = DocxFactory.createAll(root, nsmap)
+        self.__content = DocxFactory.recursive(root, nsmap)
 
     def html(self):
         inner = "".join([str(i.html()) for i in self.__content])
@@ -144,7 +144,7 @@ class PTag:
     def __init__(self, root, nsmap = []):
         self.__pPr = Properties(root.find("w:pPr", nsmap), nsmap)
 
-        self.__r = [DocxFactory.build(tag, nsmap) for tag in root.findall("w:r", nsmap)]
+        self.__r = DocxFactory.recursive(root, nsmap)
 
     def html(self):
         inner = "".join([str(i.html()) for i in self.__r])
@@ -156,7 +156,7 @@ class PTag:
         return "<p{}>{}</p>".format(self.__pPr.html(), inner)
 
 
-word = "".join([i.html() for i in DocxFactory.createAll(body, nsmap)])
+word = "".join([i.html() for i in DocxFactory.recursive(body, nsmap)])
 
 with open("result.html", "w", encoding="utf-8") as out:
     out.write('<body style="white-space:break-spaces">{}</body>'.format(word))
