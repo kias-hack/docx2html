@@ -29,15 +29,15 @@ class DocxFactory:
 
         prefix = "{" + nsmap['w'] + "}"
         
-        if prefix + "p" == root.tag:
+        if "{}p".format(prefix) == root.tag:
             return PTag(root, nsmap)
-        if prefix + "r" == root.tag:
+        if "{}r".format(prefix) == root.tag:
             return RTag(root, nsmap)
-        if prefix + "t" == root.tag:
+        if "{}t".format(prefix) == root.tag:
             return TTag(root, nsmap)
-        if prefix + "drawing" == root.tag:
+        if "{}drawing".format(prefix) == root.tag:
             return DrawingTag(root, nsmap)
-        if prefix + "br" == root.tag:
+        if "{}br".format(prefix) == root.tag:
             return BrTag(root, nsmap)
 
         return StubTag(root, nsmap)
