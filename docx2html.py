@@ -6,20 +6,16 @@ from os import path
 
 docx = open("document.xml", "r", encoding="utf-8").read(-1)
 
-root = etree.parse("document.xml").getroot()
+parser = etree.XMLParser(load_dtd=True)
+root = etree.parse("document.xml", parser=parser).getroot()
+body = root.find("w:body", root.nsmap)
 
 nsmap = root.nsmap
-
-body = root.find("w:body", root.nsmap)
 #  [{'xml':'http://www.w3.org/XML/1998/namespace'}]
 
 # [print(e.attrib.get("{http://www.w3.org/XML/1998/namespace}space")) for e in body.findall("w:p/w:r/w:t", root.nsmap)]
 
 # exit()
-
-"""
-TODO сделать отработку пробелов, нету пробелов в одном из примере. В xml не знаю где они деваются возможно какое то свойство (но везде стоит xml:space="preserve", стоит подумать)
-"""
 
 """
 TODO возможно вынести построение тегов в статические методы, чтобы можно было делать конвертацию в две стороны
@@ -78,7 +74,7 @@ class TTag:
         self.__text = "" if None is root.text else root.text
 
     def html(self):
-        return self.__text
+        return self.__text.replace(" ", "&nbsp;")
 
 class Properties:
     def __init__(self, root, nsmap=[]):
